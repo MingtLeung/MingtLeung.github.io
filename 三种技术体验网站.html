@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>蓝牙 vs NFC vs RFID 体验式学习平台</title>
+  <style>
+    :root{
+      --blue:#246BFE;
+      --blue2:#EAF2FF;
+      --cyan:#14B8D4;
+      --green:#20B486;
+      --orange:#FF9F43;
+      --red:#EF4444;
+      --ink:#172033;
+      --muted:#667085;
+      --line:#D9E3F0;
+      --card:#FFFFFF;
+      --bg:#F5F8FE;
+      --shadow:0 14px 34px rgba(37, 76, 130, .10);
+      --radius:20px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:"Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(36,107,254,.15), transparent 34%),
+        linear-gradient(180deg,#F7FAFF 0%, #F4F7FC 100%);
+    }
+    .page{max-width:1420px;margin:0 auto;padding:18px 22px 34px}
+    header{
+      position:sticky;top:0;z-index:20;
+      backdrop-filter:blur(14px);
+      background:rgba(245,248,254,.88);
+      border-bottom:1px solid rgba(217,227,240,.75);
+      margin:0 -22px 18px;padding:14px 22px 12px;
+    }
+    .topbar{max-width:1420px;margin:0 auto;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .title-wrap h1{margin:0;font-size:clamp(24px,3vw,40px);letter-spacing:.5px;color:#0F265C}
+    .title-wrap p{margin:8px 0 0;color:var(--muted);font-size:15px;line-height:1.5}
+    .nav{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .nav a,.small-btn{
+      border:1px solid var(--line);background:#fff;color:#1C3768;text-decoration:none;
+      padding:9px 13px;border-radius:999px;font-size:14px;font-weight:700;box-shadow:0 4px 12px rgba(36,107,254,.06);
+      cursor:pointer;
+    }
+    .task-guide{
+      display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-bottom:18px;
+    }
+    .guide-card{
+      background:linear-gradient(135deg,#FFFFFF 0%, #EEF5FF 100%);
+      border:1px solid #DCE8F7;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;
+    }
+    .guide-card h2{margin:0 0 10px;font-size:20px;color:#143A82}
+    .guide-card p{margin:0;color:#475467;line-height:1.7;font-size:15px}
+    .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .role{background:#fff;border:1px dashed #BFD0EC;border-radius:14px;padding:10px;font-size:13px;color:#344054}
+    .role b{display:block;color:#163D7A;margin-bottom:7px;font-size:15px;text-align:center}
+    .role input{width:100%;margin-top:6px;border:1px solid #CDD8EA;border-radius:11px;padding:8px 9px;font-family:inherit;font-size:13px;background:#FBFDFF;color:#172033;outline:none}
+    .role input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(36,107,254,.10)}
+
+    .tech-grid{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:16px;align-items:stretch}
+    .tech-card{
+      background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+      overflow:hidden;display:flex;flex-direction:column;min-height:620px;
+    }
+    .tech-head{padding:16px 18px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .tech-head h2{margin:0;font-size:21px;display:flex;gap:8px;align-items:center}
+    .tag{font-size:12px;border:1px solid rgba(255,255,255,.55);border-radius:999px;padding:5px 9px;background:rgba(255,255,255,.18);white-space:nowrap}
+    .bluetooth .tech-head{background:linear-gradient(135deg,#246BFE,#54A0FF)}
+    .nfc .tech-head{background:linear-gradient(135deg,#16A085,#2ECC71)}
+    .rfid .tech-head{background:linear-gradient(135deg,#6C5CE7,#00B8D9)}
+    .tech-body{padding:15px;display:flex;flex-direction:column;gap:12px;flex:1}
+    .sim-area{
+      position:relative;min-height:245px;border-radius:18px;border:1px solid #DDE8F6;
+      background:linear-gradient(180deg,#FBFDFF,#EDF5FF);overflow:hidden;padding:14px;
+    }
+    .ground{position:absolute;left:0;right:0;bottom:34px;height:5px;background:linear-gradient(90deg,transparent,#A9C4EA,transparent)}
+    .device{
+      position:absolute;display:grid;place-items:center;text-align:center;
+      min-width:78px;min-height:78px;border-radius:20px;background:#fff;border:1px solid #CBD8EA;box-shadow:0 12px 22px rgba(44,75,120,.12);
+      font-size:42px;transition:.35s ease;
+    }
+    .device small{position:absolute;bottom:7px;font-size:12px;color:#344054;background:rgba(255,255,255,.88);border-radius:99px;padding:2px 7px;white-space:nowrap}
+    .phone{left:22px;bottom:58px}
+    .headphone{right:22px;bottom:58px}
+    .distance-label{position:absolute;left:50%;top:18px;transform:translateX(-50%);padding:8px 12px;border-radius:99px;background:#fff;border:1px solid #D7E4F6;font-size:14px;color:#1C3768;font-weight:800}
+    .signal-line{position:absolute;left:115px;right:115px;bottom:100px;border-top:4px dotted rgba(36,107,254,.35);opacity:.35;transition:.3s}
+    .signal-line.on{opacity:1;border-color:rgba(32,180,134,.78);animation:pulse 1.2s infinite}
+    .music{
+      position:absolute;left:50%;bottom:128px;transform:translateX(-50%);display:none;gap:6px;align-items:flex-end;height:44px;
+    }
+    .music span{display:block;width:8px;background:var(--green);border-radius:9px;animation:equalize .55s infinite alternate}
+    .music span:nth-child(2){animation-delay:.12s}.music span:nth-child(3){animation-delay:.24s}.music span:nth-child(4){animation-delay:.36s}
+    .music.on{display:flex}
+    @keyframes equalize{from{height:12px}to{height:42px}}
+    @keyframes pulse{50%{filter:drop-shadow(0 0 6px rgba(32,180,134,.6))}}
+
+    .status-box{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;background:#F7FAFF;border:1px solid #DDE8F6;border-radius:16px;padding:12px}
+    .lamp{width:18px;height:18px;border-radius:50%;background:#B5BFCD;box-shadow:0 0 0 6px rgba(181,191,205,.15)}
+    .lamp.ok{background:var(--green);box-shadow:0 0 0 6px rgba(32,180,134,.16),0 0 14px rgba(32,180,134,.7)}
+    .lamp.warn{background:var(--orange);box-shadow:0 0 0 6px rgba(255,159,67,.16)}
+    .lamp.bad{background:var(--red);box-shadow:0 0 0 6px rgba(239,68,68,.14)}
+    .status-title{font-weight:900;color:#172033;margin-bottom:3px}
+    .status-text{font-size:13px;color:#667085;line-height:1.4}
+    .controls{display:grid;gap:10px;background:#FBFCFF;border:1px solid #E4ECF7;border-radius:16px;padding:12px}
+    button{
+      border:0;border-radius:14px;background:var(--blue);color:#fff;font-weight:900;padding:11px 13px;cursor:pointer;box-shadow:0 8px 18px rgba(36,107,254,.22);
+      transition:.18s transform,.18s opacity;
+    }
+    button:hover{transform:translateY(-1px)} button:active{transform:translateY(1px)}
+    .secondary{background:#fff;color:#1C3768;border:1px solid var(--line);box-shadow:none}
+    .range-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;font-size:14px;color:#344054;font-weight:800}
+    input[type="range"]{width:100%;accent-color:var(--blue)}
+    .scale{display:flex;justify-content:space-between;color:#667085;font-size:12px;margin-top:-5px}
+    .auto-note{font-size:13px;color:#3B5B92;background:#EFF6FF;border:1px solid #D5E7FF;border-radius:14px;padding:10px;line-height:1.55}
+    .auto-note.done{color:#096947;background:#EAFBF4;border-color:#BEEBD8}
+    .mini-list{margin:0;padding-left:18px;color:#475467;font-size:13.5px;line-height:1.65}
+
+    /* NFC */
+    .nfc .sim-area{background:linear-gradient(180deg,#F6FFFB,#E9FBF3)}
+    .nfc-phone{left:22px;bottom:58px}
+    .reader{right:26px;bottom:58px;background:linear-gradient(180deg,#fff,#F2FFF9)}
+    .tap-zone{position:absolute;right:20px;bottom:48px;width:110px;height:100px;border:3px dashed rgba(32,180,134,.42);border-radius:24px;background:rgba(32,180,134,.06)}
+    .nfc-waves{position:absolute;right:122px;bottom:91px;color:#20B486;font-weight:900;font-size:26px;opacity:.2;transition:.3s}
+    .nfc-waves.on{opacity:1;animation:pulse .8s infinite}
+    .touch-label{position:absolute;left:50%;top:18px;transform:translateX(-50%);background:#fff;border:1px solid #CFEBDD;border-radius:999px;padding:8px 12px;font-weight:900;color:#126B4D}
+
+    /* RFID */
+    .rfid .sim-area{background:linear-gradient(180deg,#F8F7FF,#EDF7FF)}
+    .track{position:absolute;left:0;right:0;bottom:56px;height:64px;background:linear-gradient(90deg,#DCE6F4,#F7FBFF,#DCE6F4);border-top:2px solid #BFD0EA;border-bottom:2px solid #BFD0EA}
+    .rfid-reader{position:absolute;right:78px;bottom:112px;width:84px;height:100px;border-radius:16px;background:#fff;border:1px solid #C7D4EA;display:grid;place-items:center;font-size:42px;box-shadow:0 14px 22px rgba(44,75,120,.14)}
+    .rfid-reader small{position:absolute;bottom:8px;font-size:12px;color:#344054;background:#fff;border-radius:99px;padding:2px 7px}
+    .sense-zone{position:absolute;right:28px;bottom:36px;width:184px;height:166px;border:3px dashed rgba(108,92,231,.45);border-radius:50%;background:rgba(108,92,231,.08);display:grid;place-items:center;color:#5B4BC8;font-weight:900;font-size:13px;text-align:center;padding:18px}
+    .cyclist{position:absolute;left:10px;bottom:72px;font-size:52px;filter:drop-shadow(0 10px 10px rgba(44,75,120,.16));transition:transform .3s}
+    .cyclist::after{content:"RFID标签";position:absolute;left:28px;top:-12px;font-size:12px;color:#5B4BC8;background:#fff;border:1px solid #CFC8FF;border-radius:999px;padding:2px 7px;white-space:nowrap}
+    .cyclist.ride{animation:ride 2.2s cubic-bezier(.42,0,.25,1) forwards}
+    @keyframes ride{0%{left:-10px}55%{left:calc(100% - 210px)}100%{left:calc(100% - 64px)}}
+    .scan-beam{position:absolute;right:108px;bottom:88px;width:8px;height:132px;background:linear-gradient(180deg,transparent,rgba(0,184,217,.75),transparent);filter:blur(.4px);opacity:0;animation:none}
+    .scan-beam.on{opacity:1;animation:scan .55s infinite alternate}
+    @keyframes scan{from{transform:translateX(-25px)}to{transform:translateX(25px)}}
+
+    .bottom-section{margin-top:18px;display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+    .panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;overflow:hidden}
+    .panel h2{margin:0 0 12px;font-size:21px;color:#143A82}
+    table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:16px;border:1px solid #DDE8F6;font-size:14px;background:#fff}
+    th{background:#EAF2FF;color:#133D82;text-align:left;padding:12px;border-bottom:1px solid #DDE8F6;white-space:nowrap}
+    td{padding:12px;border-bottom:1px solid #EEF2F8;color:#344054;vertical-align:top;line-height:1.45}
+    tr:last-child td{border-bottom:0}
+    td:first-child{font-weight:900;color:#172033}
+    .table-wrap{width:100%;overflow-x:auto;border-radius:16px}
+    .compare-table{min-width:1040px}
+    .table-input{width:100%;min-width:116px;border:1px solid #CDD8EA;border-radius:11px;padding:8px 9px;font-family:inherit;font-size:13px;line-height:1.35;background:#FBFDFF;color:#172033;outline:none}
+    .table-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(36,107,254,.10)}
+    .compare-tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .answer-key{display:none;margin-top:12px;background:#F0F7FF;border:1px dashed #9EC2F8;border-radius:16px;padding:12px;color:#345078;font-size:13.5px;line-height:1.65}
+    .answer-key.show{display:block}
+    .answer-key b{color:#143A82}
+    .pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;background:#F2F4F7;color:#475467;font-size:12px;font-weight:800}
+    .pill.ok{background:#EAFBF4;color:#08784F}.pill.wait{background:#FFF8E8;color:#946200}
+    .question-box{display:grid;gap:10px}
+    .fill-sentence{background:#F7FAFF;border:1px solid #DDE8F6;border-radius:16px;padding:12px;color:#344054;line-height:1.8;font-size:15px}
+    .inline-blank{display:inline-block;width:120px;max-width:36vw;border:0;border-bottom:2px solid #7EA6E8;background:#FFFFFF;border-radius:8px 8px 0 0;padding:4px 8px;margin:0 3px;font-family:inherit;font-size:15px;color:#172033;outline:none;text-align:center}
+    .inline-blank:focus{border-bottom-color:var(--blue);box-shadow:0 4px 0 rgba(36,107,254,.10)}
+    textarea{width:100%;min-height:130px;border:1px solid #CDD8EA;border-radius:16px;padding:12px;font-family:inherit;font-size:15px;line-height:1.6;resize:vertical;outline:none;background:#FBFDFF;color:#172033}
+    textarea:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(36,107,254,.10)}
+    .button-row{display:flex;gap:10px;flex-wrap:wrap}
+    .feedback{min-height:42px;background:#F7FAFF;border:1px solid #DDE8F6;border-radius:16px;padding:11px 12px;color:#475467;line-height:1.55;font-size:14px}
+    .feedback.good{background:#EAFBF4;border-color:#BEEBD8;color:#096947}.feedback.mid{background:#FFF8E8;border-color:#FFE0A6;color:#8A5A00}
+    .hint{display:none;background:#F0F7FF;border:1px dashed #9EC2F8;border-radius:16px;padding:12px;color:#345078;font-size:14px;line-height:1.65}
+    .hint.show{display:block}
+    .summary-strip{margin-top:12px;background:linear-gradient(135deg,#F0F7FF,#F8FBFF);border:1px solid #DCE8F7;border-radius:16px;padding:12px;color:#1C3768;font-weight:800;line-height:1.6}
+
+    @media(max-width:1100px){
+      .tech-grid{grid-template-columns:1fr}.tech-card{min-height:auto}.bottom-section,.task-guide{grid-template-columns:1fr}.roles{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:620px){
+      .page{padding:12px}.topbar{align-items:flex-start}.nav{justify-content:flex-start}.roles{grid-template-columns:1fr}
+      header{margin:0 -12px 14px;padding:12px}
+      table{font-size:12px} th,td{padding:9px}
+      .device{min-width:64px;min-height:64px;font-size:32px}.phone{left:12px}.headphone{right:12px}.signal-line{left:88px;right:88px}
+      .rfid-reader{right:58px}.sense-zone{right:14px;width:158px}.tech-head{flex-wrap:wrap}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="topbar">
+        <div class="title-wrap">
+          <h1>蓝牙 vs NFC vs RFID 体验式学习平台</h1>
+          <p>通过拖动、点击和观察，发现三种近距离通信技术的距离、连接方式与典型应用差异。</p>
+        </div>
+        <nav class="nav" aria-label="页面导航">
+          <a href="#bluetooth">蓝牙体验</a>
+          <a href="#nfc">NFC体验</a>
+          <a href="#rfid">RFID体验</a>
+          <a href="#compare">对比总结</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="task-guide" aria-label="任务指引">
+      <div class="guide-card">
+        <h2>任务指引</h2>
+        <p>请以小组为单位完成三项体验：先操作模拟设备，再观察状态变化，最后把自动生成的结论补充到探究问题中。重点比较：<b>通信距离</b>、<b>是否需要配对/接触</b>、<b>是否适合高速移动识别</b>。</p>
+      </div>
+      <div class="guide-card">
+        <h2>小组分工填写</h2>
+        <p>请填写每位成员的姓名与具体负责工作，便于小组协作完成探究任务。</p>
+        <div class="roles">
+          <div class="role"><b>操作员</b><input type="text" placeholder="姓名"><input type="text" placeholder="负责工作：操作三项体验区"></div>
+          <div class="role"><b>分析员</b><input type="text" placeholder="姓名"><input type="text" placeholder="负责工作：观察现象并比较差异"></div>
+          <div class="role"><b>汇报员</b><input type="text" placeholder="姓名"><input type="text" placeholder="负责工作：整理结论并汇报观点"></div>
+        </div>
+      </div>
+    </section>
+
+    <main class="tech-grid">
+      <section class="tech-card bluetooth" id="bluetooth">
+        <div class="tech-head">
+          <h2>🔵 蓝牙体验区</h2><span class="tag">手机 ↔ 蓝牙耳机</span>
+        </div>
+        <div class="tech-body">
+          <div class="sim-area" aria-label="蓝牙模拟区">
+            <div class="distance-label" id="btDistanceLabel">距离：0 米</div>
+            <div class="signal-line" id="btSignal"></div>
+            <div class="music" id="musicBars"><span></span><span></span><span></span><span></span></div>
+            <div class="device phone" aria-label="手机">📱<small>手机</small></div>
+            <div class="device headphone" id="headphone" aria-label="蓝牙耳机">🎧<small>蓝牙耳机</small></div>
+            <div class="ground"></div>
+          </div>
+          <div class="status-box">
+            <span class="lamp" id="btLamp"></span>
+            <div><div class="status-title" id="btStatusTitle">未配对</div><div class="status-text" id="btStatusText">点击“配对蓝牙”，再拖动距离滑块观察信号变化。</div></div>
+          </div>
+          <div class="controls">
+            <button id="pairBtn">配对蓝牙</button>
+            <div>
+              <div class="range-row"><label for="btRange">拖动距离</label><span id="btRangeValue">0 m</span></div>
+              <input id="btRange" type="range" min="0" max="20" step="1" value="0" />
+              <div class="scale"><span>0m</span><span>5m</span><span>10m</span><span>20m</span></div>
+            </div>
+          </div>
+          <div class="auto-note" id="btAuto">体验记录：完成配对并测试距离后，系统会标记蓝牙体验完成，请学生自主填写对比表。</div>
+          <ul class="mini-list">
+            <li>0–10米：连接正常，音乐播放。</li>
+            <li>超过10米：信号中断，音乐停止。</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="tech-card nfc" id="nfc">
+        <div class="tech-head">
+          <h2>🟢 NFC体验区</h2><span class="tag">手机刷交通卡</span>
+        </div>
+        <div class="tech-body">
+          <div class="sim-area" aria-label="NFC模拟区">
+            <div class="touch-label" id="nfcDistanceLabel">距离：20 厘米｜远</div>
+            <div class="tap-zone"></div>
+            <div class="nfc-waves" id="nfcWaves">)))</div>
+            <div class="device nfc-phone" id="nfcPhone" aria-label="手机">📱<small>手机</small></div>
+            <div class="device reader" aria-label="交通卡或读卡器">💳<small>读卡器</small></div>
+            <div class="ground"></div>
+          </div>
+          <div class="status-box">
+            <span class="lamp bad" id="nfcLamp"></span>
+            <div><div class="status-title" id="nfcStatusTitle">未识别</div><div class="status-text" id="nfcStatusText">拖动手机靠近读卡器，只有贴合到0–2厘米才会读取成功。</div></div>
+          </div>
+          <div class="controls">
+            <div>
+              <div class="range-row"><label for="nfcRange">拖动手机靠近卡片</label><span id="nfcRangeValue">20 cm</span></div>
+              <input id="nfcRange" type="range" min="0" max="20" step="1" value="20" />
+              <div class="scale"><span>贴合 0cm</span><span>2cm</span><span>近</span><span>远 20cm</span></div>
+            </div>
+          </div>
+          <div class="auto-note" id="nfcAuto">体验记录：当手机贴合读卡器并成功读取后，系统会标记NFC体验完成，请学生自主填写对比表。</div>
+          <ul class="mini-list">
+            <li>0–2厘米：一碰即读，无需配对。</li>
+            <li>离开后：立即失效。</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="tech-card rfid" id="rfid">
+        <div class="tech-head">
+          <h2>🟣 RFID体验区</h2><span class="tag">选手手环 ↔ 赛道读写器</span>
+        </div>
+        <div class="tech-body">
+          <div class="sim-area" aria-label="RFID模拟区">
+            <div class="sense-zone" id="senseZone">宽感应区<br><span id="senseText">3 米</span></div>
+            <div class="track"></div>
+            <div class="scan-beam" id="scanBeam"></div>
+            <div class="rfid-reader">📡<small>读写器</small></div>
+            <div class="cyclist" id="cyclist">🚴</div>
+          </div>
+          <div class="status-box">
+            <span class="lamp" id="rfidLamp"></span>
+            <div><div class="status-title" id="rfidStatusTitle">等待骑行</div><div class="status-text" id="rfidStatusText">点击“开始骑行”，观察选手高速经过时是否被识别。</div></div>
+          </div>
+          <div class="controls">
+            <button id="rideBtn">开始骑行</button>
+            <div>
+              <div class="range-row"><label for="rfidRange">设置读写器感应距离</label><span id="rfidRangeValue">3 m</span></div>
+              <input id="rfidRange" type="range" min="1" max="5" step="2" value="3" />
+              <div class="scale"><span>1m</span><span>3m</span><span>5m</span></div>
+            </div>
+          </div>
+          <div class="auto-note" id="rfidAuto">体验记录：启动骑行并完成识别后，系统会标记RFID体验完成，请学生自主填写对比表。</div>
+          <ul class="mini-list">
+            <li>可非接触识别，不需要选手停留。</li>
+            <li>适合赛事通关、仓储盘点、门禁识别等场景。</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <section class="bottom-section" id="compare">
+      <div class="panel">
+        <h2>蓝牙 vs NFC vs RFID 对比表</h2>
+        <p style="margin:0 0 10px;color:#667085;line-height:1.6;font-size:14px">请先完成上方三个体验，再根据观察结果自主填写表格。填写后可点击“检查对比表”。</p>
+        <div class="table-wrap">
+          <table class="compare-table" aria-label="技术对比填空表">
+            <thead>
+              <tr><th>技术</th><th>工作频率</th><th>工作距离</th><th>连接 / 工作要求</th><th>移动场景适配</th><th>成本</th><th>生活应用</th><th>体验状态</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>蓝牙</td>
+                <td><input class="table-input" id="btFreq" placeholder="请填写工作频率"></td>
+                <td><input class="table-input" id="btDistance" placeholder="请填写工作距离"></td>
+                <td><input class="table-input" id="btRequire" placeholder="请填写连接要求"></td>
+                <td><input class="table-input" id="btMove" placeholder="请填写移动适配情况"></td>
+                <td><input class="table-input" id="btCost" placeholder="请填写成本特点"></td>
+                <td><input class="table-input" id="btUse" placeholder="请填写生活应用"></td>
+                <td id="btTableState"><span class="pill wait">未完成</span></td>
+              </tr>
+              <tr>
+                <td>NFC</td>
+                <td><input class="table-input" id="nfcFreq" placeholder="请填写工作频率"></td>
+                <td><input class="table-input" id="nfcDistance" placeholder="请填写工作距离"></td>
+                <td><input class="table-input" id="nfcRequire" placeholder="请填写工作要求"></td>
+                <td><input class="table-input" id="nfcMove" placeholder="请填写移动适配情况"></td>
+                <td><input class="table-input" id="nfcCost" placeholder="请填写成本特点"></td>
+                <td><input class="table-input" id="nfcUse" placeholder="请填写生活应用"></td>
+                <td id="nfcTableState"><span class="pill wait">未完成</span></td>
+              </tr>
+              <tr>
+                <td>RFID</td>
+                <td><input class="table-input" id="rfidFreq" placeholder="请填写工作频率"></td>
+                <td><input class="table-input" id="rfidDistance" placeholder="请填写工作距离"></td>
+                <td><input class="table-input" id="rfidRequire" placeholder="请填写工作要求"></td>
+                <td><input class="table-input" id="rfidMove" placeholder="请填写移动适配情况"></td>
+                <td><input class="table-input" id="rfidCost" placeholder="请填写成本特点"></td>
+                <td><input class="table-input" id="rfidUse" placeholder="请填写生活应用"></td>
+                <td id="rfidTableState"><span class="pill wait">未完成</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="compare-tools">
+          <button id="checkTableBtn" type="button">检查对比表</button>
+          <button class="secondary" id="showKeyBtn" type="button">查看参考答案</button>
+        </div>
+        <div class="answer-key" id="compareKey">
+          <b>参考答案：</b><br>
+          蓝牙：2.4GHz；约10米；需要配对后连接；适合近距离设备互联，不适合高速自动识别；成本较低；蓝牙耳机、音箱、手柄。<br>
+          NFC：13.56MHz；0–2厘米左右；贴近即可读取，无需配对；适合静止或短暂停留的一碰即读，不适合高速远距离识别；成本低；公交卡、手机支付、门禁卡。<br>
+          RFID：频率类型较多，常见有低频/高频/超高频；数厘米到数米；非接触、无需停留；适合高速移动和批量识别；标签成本低、读写器成本相对更高；赛事计时、仓储盘点、电子门禁、车辆通行。
+        </div>
+        <div class="summary-strip" id="summaryStrip">完成三项体验后，请自主填写表格，并用表格证据回答探究问题。</div>
+        <div class="feedback" id="compareFeedback" style="margin-top:10px">填写对比表后，点击“检查对比表”查看完成度提示。</div>
+      </div>
+
+      <div class="panel">
+        <h2>探究问题回答区</h2>
+        <div class="question-box">
+          <div class="fill-sentence">
+            <b>问题：</b>为什么十五运会自行车赛选用 RFID，不选蓝牙、NFC？<br>
+            请补全思路：RFID 可以在
+            <input class="inline-blank" id="blankDistance" type="text" aria-label="RFID识别距离" placeholder="填写" />
+            距离内识别选手标签，选手
+            <input class="inline-blank" id="blankStop" type="text" aria-label="选手是否需要停下" placeholder="填写" />
+            停下或贴近读写器；蓝牙通常需要先
+            <input class="inline-blank" id="blankPair" type="text" aria-label="蓝牙连接要求" placeholder="填写" />
+            ，NFC 必须
+            <input class="inline-blank" id="blankTouch" type="text" aria-label="NFC工作要求" placeholder="填写" />
+            ，因此二者都不适合高速通过的赛事识别。
+          </div>
+          <textarea id="answer" placeholder="请在这里输入或语音输入你的回答……"></textarea>
+          <div class="button-row">
+            <button id="speechBtn" type="button">🎙️ 语音输入</button>
+            <button id="checkBtn" type="button">提交并查看反馈</button>
+            <button class="secondary" id="hintBtn" type="button">查看答题支架</button>
+            <button class="secondary" id="resetBtn" type="button">重置体验</button>
+          </div>
+          <div class="hint" id="hintBox">
+            答题支架：从“距离、连接方式、是否接触、是否能高速识别”四个角度比较。推荐关键词：<b>数米范围、无需接触、无需停留、无需配对、蓝牙配对、NFC贴合</b>。
+          </div>
+          <div class="feedback" id="feedback">提交后，系统会根据关键词给出即时反馈。</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      bluetooth:false,
+      nfc:false,
+      rfid:false,
+      paired:false,
+      rfidDistance:3
+    };
+
+    const $ = (id)=>document.getElementById(id);
+    function markDone(prefix){
+      if(prefix === 'bt'){
+        $('btTableState').innerHTML = '<span class="pill ok">体验完成</span>';
+        $('btAuto').textContent = '体验记录：蓝牙体验已完成。请根据“10米内连接、超过10米中断”的观察填写对比表。';
+        $('btAuto').classList.add('done');
+        state.bluetooth = true;
+      }
+      if(prefix === 'nfc'){
+        $('nfcTableState').innerHTML = '<span class="pill ok">体验完成</span>';
+        $('nfcAuto').textContent = '体验记录：NFC体验已完成。请根据“0–2厘米贴合才读取”的观察填写对比表。';
+        $('nfcAuto').classList.add('done');
+        state.nfc = true;
+      }
+      if(prefix === 'rfid'){
+        $('rfidTableState').innerHTML = '<span class="pill ok">体验完成</span>';
+        $('rfidAuto').textContent = '体验记录：RFID体验已完成。请根据“非接触、数米范围、高速可识别”的观察填写对比表。';
+        $('rfidAuto').classList.add('done');
+        state.rfid = true;
+      }
+      updateSummary();
+    }
+    function updateSummary(){
+      if(state.bluetooth && state.nfc && state.rfid){
+        $('summaryStrip').textContent = '三项体验已完成：请把观察到的频率、距离、连接/工作要求、移动场景适配、成本和生活应用填写到表格中，再完成探究回答。';
+      }
+    }
+
+    // Bluetooth
+    function updateBluetooth(){
+      const d = Number($('btRange').value);
+      $('btRangeValue').textContent = d + ' m';
+      $('btDistanceLabel').textContent = '距离：' + d + ' 米';
+      const maxShift = 46;
+      $('headphone').style.transform = 'translateX(' + Math.min(d/20*maxShift, maxShift) + 'px)';
+      if(!state.paired){
+        $('btLamp').className = 'lamp';
+        $('btStatusTitle').textContent = '未配对';
+        $('btStatusText').textContent = '点击“配对蓝牙”，再拖动距离滑块观察信号变化。';
+        $('btSignal').classList.remove('on');
+        $('musicBars').classList.remove('on');
+        return;
+      }
+      if(d <= 10){
+        $('btLamp').className = 'lamp ok';
+        $('btStatusTitle').textContent = '连接正常｜正在播放音乐';
+        $('btStatusText').textContent = '距离在10米以内，手机和蓝牙耳机保持连接。';
+        $('btSignal').classList.add('on');
+        $('musicBars').classList.add('on');
+        markDone('bt');
+      }else{
+        $('btLamp').className = 'lamp bad';
+        $('btStatusTitle').textContent = '信号中断｜音乐停止';
+        $('btStatusText').textContent = '超过约10米后，蓝牙连接不稳定并中断。';
+        $('btSignal').classList.remove('on');
+        $('musicBars').classList.remove('on');
+        markDone('bt');
+      }
+    }
+    $('pairBtn').addEventListener('click',()=>{
+      state.paired = true;
+      $('pairBtn').textContent = '已配对，可继续测试距离';
+      updateBluetooth();
+    });
+    $('btRange').addEventListener('input',updateBluetooth);
+
+    // NFC
+    function updateNFC(){
+      const d = Number($('nfcRange').value);
+      $('nfcRangeValue').textContent = d + ' cm';
+      const label = d <= 2 ? '贴合' : d <= 8 ? '近' : '远';
+      $('nfcDistanceLabel').textContent = '距离：' + d + ' 厘米｜' + label;
+      const leftPx = 22 + (20-d) / 20 * 210;
+      $('nfcPhone').style.left = leftPx + 'px';
+      if(d <= 2){
+        $('nfcLamp').className = 'lamp ok';
+        $('nfcStatusTitle').textContent = '已读取｜刷卡成功';
+        $('nfcStatusText').textContent = '手机与读卡器几乎贴合，NFC完成一碰即读。';
+        $('nfcWaves').classList.add('on');
+        markDone('nfc');
+      }else if(d <= 8){
+        $('nfcLamp').className = 'lamp warn';
+        $('nfcStatusTitle').textContent = '距离较近，但未读取';
+        $('nfcStatusText').textContent = 'NFC距离要求很短，还需要继续贴近。';
+        $('nfcWaves').classList.remove('on');
+      }else{
+        $('nfcLamp').className = 'lamp bad';
+        $('nfcStatusTitle').textContent = '未识别';
+        $('nfcStatusText').textContent = '距离太远，NFC无法读取。';
+        $('nfcWaves').classList.remove('on');
+      }
+    }
+    $('nfcRange').addEventListener('input',updateNFC);
+
+    // RFID
+    function updateRFIDRange(){
+      const d = Number($('rfidRange').value);
+      state.rfidDistance = d;
+      $('rfidRangeValue').textContent = d + ' m';
+      $('senseText').textContent = d + ' 米';
+      const size = d === 1 ? 126 : d === 3 ? 166 : 206;
+      $('senseZone').style.width = size + 'px';
+      $('senseZone').style.height = size + 'px';
+      $('rfidStatusText').textContent = '当前感应距离为' + d + '米。点击“开始骑行”观察高速识别。';
+    }
+    $('rfidRange').addEventListener('input',updateRFIDRange);
+    $('rideBtn').addEventListener('click',()=>{
+      const cyclist = $('cyclist');
+      cyclist.classList.remove('ride');
+      void cyclist.offsetWidth;
+      cyclist.classList.add('ride');
+      $('scanBeam').classList.add('on');
+      $('rfidLamp').className = 'lamp warn';
+      $('rfidStatusTitle').textContent = '高速通过中……';
+      $('rfidStatusText').textContent = '读写器正在扫描带有RFID标签的选手手环。';
+      setTimeout(()=>{
+        $('rfidLamp').className = 'lamp ok';
+        $('rfidStatusTitle').textContent = '识别成功｜无需停留';
+        $('rfidStatusText').textContent = '选手在约' + state.rfidDistance + '米感应区内高速经过，仍可被读写器识别。';
+        markDone('rfid');
+      },1150);
+      setTimeout(()=>{$('scanBeam').classList.remove('on')},2500);
+    });
+
+    // Compare table check
+    const compareInputs = ['btFreq','btDistance','btRequire','btMove','btCost','btUse','nfcFreq','nfcDistance','nfcRequire','nfcMove','nfcCost','nfcUse','rfidFreq','rfidDistance','rfidRequire','rfidMove','rfidCost','rfidUse'];
+    function checkCompareTable(){
+      const filled = compareInputs.filter(id => $(id).value.trim().length > 0).length;
+      const total = compareInputs.length;
+      const important = [
+        /2\.4|2.4|GHz|蓝牙/i.test($('btFreq').value),
+        /10|十|近距离/.test($('btDistance').value),
+        /配对|连接/.test($('btRequire').value),
+        /13\.56|13.56|MHz|高频/i.test($('nfcFreq').value),
+        /0|2|厘米|贴/.test($('nfcDistance').value),
+        /贴近|贴合|一碰|无需配对/.test($('nfcRequire').value),
+        /数米|厘米|米|远距离/.test($('rfidDistance').value),
+        /非接触|无需接触|无需停留|不停留/.test($('rfidRequire').value),
+        /高速|移动|批量/.test($('rfidMove').value)
+      ].filter(Boolean).length;
+      if(filled < total){
+        $('compareFeedback').className = 'feedback mid';
+        $('compareFeedback').textContent = `已填写 ${filled}/${total} 个空格。请继续补全空白处，尤其注意“工作频率、工作距离、连接/工作要求、移动场景适配”。`;
+        return;
+      }
+      if(important >= 7){
+        $('compareFeedback').className = 'feedback good';
+        $('compareFeedback').textContent = '对比表完成度较高！关键差异已经体现：蓝牙需配对、NFC需贴近、RFID可非接触并适合移动识别。';
+      }else{
+        $('compareFeedback').className = 'feedback mid';
+        $('compareFeedback').textContent = '表格已填写，但部分关键词还不够准确。建议回到三个体验区重新观察，再从“频率、距离、工作要求、移动适配、成本、应用”六个维度修正表格。';
+      }
+    }
+    $('checkTableBtn').addEventListener('click',checkCompareTable);
+    $('showKeyBtn').addEventListener('click',()=>{$('compareKey').classList.toggle('show')});
+
+    // Question check
+    function checkAnswer(){
+      const blanks = [$('blankDistance').value, $('blankStop').value, $('blankPair').value, $('blankTouch').value].join(' ');
+      const text = ($('answer').value.trim() + ' ' + blanks).trim();
+      if(!text){
+        $('feedback').className = 'feedback mid';
+        $('feedback').textContent = '还没有输入回答。可以先完成上方补全思路，再用自己的话完善说明。';
+        return;
+      }
+      const keys = [
+        /(数米|几米|3米|5米|远距离|较远)/,
+        /(无需接触|非接触|不用接触|不接触)/,
+        /(无需停留|不用停|高速|快速通过|高速移动)/,
+        /(配对|先连接)/,
+        /(贴近|贴合|0.?2|2厘米|超近)/
+      ];
+      const score = keys.reduce((sum,reg)=>sum + (reg.test(text) ? 1 : 0),0);
+      if(score >= 4){
+        $('feedback').className = 'feedback good';
+        $('feedback').innerHTML = '回答完整！你已经从通信距离、接触方式、连接方式和高速移动识别等角度说明了为什么选择RFID。';
+      }else if(score >= 2){
+        $('feedback').className = 'feedback mid';
+        $('feedback').innerHTML = '回答基本正确，但还可以补充关键词：RFID可数米范围非接触识别、无需停留；蓝牙需要配对，NFC必须贴近。';
+      }else{
+        $('feedback').className = 'feedback mid';
+        $('feedback').innerHTML = '还需要结合体验结果。建议先比较三项技术的距离与使用方式，再说明赛事高速通过为什么更适合RFID。';
+      }
+    }
+    $('checkBtn').addEventListener('click',checkAnswer);
+    $('hintBtn').addEventListener('click',()=>{$('hintBox').classList.toggle('show')});
+
+    // Speech input
+    let recognition;
+    function initSpeech(){
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if(!SpeechRecognition) return null;
+      const rec = new SpeechRecognition();
+      rec.lang = 'zh-CN';
+      rec.interimResults = false;
+      rec.continuous = false;
+      rec.onresult = (event)=>{
+        const transcript = event.results[0][0].transcript;
+        $('answer').value = ($('answer').value + ' ' + transcript).trim();
+        $('speechBtn').textContent = '🎙️ 语音输入';
+      };
+      rec.onerror = ()=>{
+        $('feedback').className = 'feedback mid';
+        $('feedback').textContent = '语音输入未成功。请检查浏览器权限，或直接键盘输入。';
+        $('speechBtn').textContent = '🎙️ 语音输入';
+      };
+      rec.onend = ()=>{$('speechBtn').textContent = '🎙️ 语音输入'};
+      return rec;
+    }
+    $('speechBtn').addEventListener('click',()=>{
+      if(!recognition) recognition = initSpeech();
+      if(!recognition){
+        $('feedback').className = 'feedback mid';
+        $('feedback').textContent = '当前浏览器不支持语音识别。建议使用Chrome或Edge，或直接键盘输入。';
+        return;
+      }
+      $('speechBtn').textContent = '正在聆听……';
+      recognition.start();
+    });
+
+    // Reset
+    $('resetBtn').addEventListener('click',()=>{
+      Object.assign(state,{bluetooth:false,nfc:false,rfid:false,paired:false,rfidDistance:3});
+      $('btRange').value = 0;$('nfcRange').value = 20;$('rfidRange').value = 3;
+      $('pairBtn').textContent = '配对蓝牙';
+      ['bt','nfc','rfid'].forEach(prefix=>{
+        $(prefix+'Auto').classList.remove('done');
+      });
+      $('btAuto').textContent = '体验记录：完成配对并测试距离后，系统会标记蓝牙体验完成，请学生自主填写对比表。';
+      $('nfcAuto').textContent = '体验记录：当手机贴合读卡器并成功读取后，系统会标记NFC体验完成，请学生自主填写对比表。';
+      $('rfidAuto').textContent = '体验记录：启动骑行并完成识别后，系统会标记RFID体验完成，请学生自主填写对比表。';
+      compareInputs.forEach(id => { $(id).value = ''; });
+      $('btTableState').innerHTML = $('nfcTableState').innerHTML = $('rfidTableState').innerHTML = '<span class="pill wait">未完成</span>';
+      $('summaryStrip').textContent = '完成三项体验后，请自主填写表格，并用表格证据回答探究问题。';
+      $('compareFeedback').className = 'feedback'; $('compareFeedback').textContent = '填写对比表后，点击“检查对比表”查看完成度提示。';
+      $('compareKey').classList.remove('show');
+      $('answer').value = '';['blankDistance','blankStop','blankPair','blankTouch'].forEach(id => { $(id).value = ''; });$('feedback').className = 'feedback';$('feedback').textContent = '提交后，系统会根据关键词给出即时反馈。';
+      const cyclist = $('cyclist'); cyclist.classList.remove('ride'); cyclist.style.left='10px';
+      updateBluetooth(); updateNFC(); updateRFIDRange();
+    });
+
+    updateBluetooth();
+    updateNFC();
+    updateRFIDRange();
+  </script>
+</body>
+</html>

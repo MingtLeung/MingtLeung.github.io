@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RFID 无感通关工作流程｜交互式探究网站（动画增强版）</title>
+  <style>
+    :root{
+      --bg:#f4f8ff;
+      --card:#ffffff;
+      --primary:#2563eb;
+      --primary-2:#1d4ed8;
+      --cyan:#06b6d4;
+      --green:#16a34a;
+      --yellow:#f59e0b;
+      --red:#ef4444;
+      --purple:#7c3aed;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#cfe1ff;
+      --soft:#eff6ff;
+      --shadow:0 18px 40px rgba(37,99,235,.13);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(96,165,250,.12), transparent 25%),
+        radial-gradient(circle at 90% 0%, rgba(6,182,212,.12), transparent 20%),
+        linear-gradient(180deg,#f8fbff 0%,#f2f7ff 100%);
+      line-height:1.65;
+    }
+    header{
+      max-width:1180px;
+      margin:0 auto;
+      padding:34px 20px 18px;
+      text-align:center;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 14px;
+      border:1px solid #bfdbfe;
+      background:#eff6ff;
+      color:#1d4ed8;
+      border-radius:999px;
+      font-size:14px;
+      font-weight:700;
+    }
+    h1{
+      margin:18px 0 10px;
+      font-size:clamp(28px,4vw,46px);
+      letter-spacing:.03em;
+      line-height:1.18;
+      color:#0f172a;
+    }
+    .subtitle{
+      max-width:860px;
+      margin:0 auto;
+      color:var(--muted);
+      font-size:17px;
+    }
+    main{
+      max-width:1180px;
+      margin:0 auto;
+      padding:10px 20px 60px;
+    }
+    section{
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(191,219,254,.85);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:24px;
+      margin:24px 0;
+      overflow:hidden;
+    }
+    .section-title{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin:0 0 18px;
+      font-size:24px;
+      color:#0f172a;
+    }
+    .num{
+      width:36px;height:36px;border-radius:12px;
+      background:linear-gradient(135deg,var(--primary),var(--cyan));
+      color:#fff;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      flex-shrink:0;
+      box-shadow:0 8px 18px rgba(37,99,235,.22);
+    }
+    .hint{
+      background:#f8fafc;
+      border-left:5px solid var(--primary);
+      color:#475569;
+      padding:12px 14px;
+      border-radius:12px;
+      margin-bottom:18px;
+    }
+
+    /* scene area */
+    .scene{
+      position:relative;
+      min-height:430px;
+      border-radius:24px;
+      overflow:hidden;
+      background:
+        linear-gradient(180deg,#dbeafe 0%,#f8fafc 52%,#d1fae5 52%,#bbf7d0 100%);
+      border:1px solid #bfdbfe;
+    }
+    .road{
+      position:absolute;
+      left:0;right:0;bottom:0;
+      height:155px;
+      background:linear-gradient(180deg,#475569,#334155);
+      clip-path:polygon(0 26%,100% 0,100% 100%,0 100%);
+    }
+    .road:after{
+      content:"";
+      position:absolute;
+      left:8%;right:8%;top:62px;
+      height:6px;
+      background:repeating-linear-gradient(90deg,#fff 0 45px,transparent 45px 78px);
+      opacity:.65;
+      transform:rotate(-3deg);
+    }
+    .device{
+      position:absolute;
+      cursor:help;
+      transition:transform .25s ease, filter .25s ease;
+      z-index:3;
+    }
+    .device:hover{transform:translateY(-5px);filter:drop-shadow(0 10px 15px rgba(15,23,42,.22))}
+    .label{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:calc(100% + 12px);
+      width:max-content;
+      max-width:260px;
+      background:#0f172a;
+      color:#fff;
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:14px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .2s ease, transform .2s ease;
+      box-shadow:0 10px 20px rgba(15,23,42,.22);
+      text-align:left;
+    }
+    .label:after{
+      content:"";
+      position:absolute;
+      top:100%;left:50%;
+      transform:translateX(-50%);
+      border:8px solid transparent;
+      border-top-color:#0f172a;
+    }
+    .device:hover .label{opacity:1;transform:translateX(-50%) translateY(-3px)}
+    .cyclist{
+      left:90px;
+      bottom:82px;
+      width:250px;
+      height:210px;
+    }
+    .wheel{position:absolute;bottom:0;width:70px;height:70px;border:8px solid #0f172a;border-radius:50%;background:rgba(255,255,255,.25)}
+    .wheel.left{left:16px}
+    .wheel.right{right:22px}
+    .bike-frame{position:absolute;left:56px;bottom:42px;width:120px;height:55px;border-left:7px solid #1d4ed8;border-bottom:7px solid #1d4ed8;border-right:7px solid #1d4ed8;transform:skewX(-18deg);border-radius:8px}
+    .person-head{position:absolute;left:112px;top:8px;width:43px;height:43px;border-radius:50%;background:#fde68a;border:5px solid #0f172a}
+    .helmet{position:absolute;left:108px;top:1px;width:52px;height:24px;border-radius:24px 24px 8px 8px;background:#2563eb}
+    .body{position:absolute;left:96px;top:56px;width:70px;height:58px;background:#38bdf8;border:5px solid #0f172a;border-radius:18px 18px 20px 20px;transform:rotate(14deg)}
+    .arm{position:absolute;left:142px;top:70px;width:72px;height:11px;border-radius:20px;background:#0f172a;transform:rotate(24deg)}
+    .wrist-tag{position:absolute;left:188px;top:88px;width:30px;height:18px;border-radius:999px;background:#f59e0b;border:3px solid #fff;box-shadow:0 0 0 3px rgba(245,158,11,.25);animation:tagPulse 2s ease-in-out infinite}
+    @keyframes tagPulse{
+      0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.25)}
+      50%{box-shadow:0 0 0 12px rgba(245,158,11,.08)}
+    }
+    .reader{
+      left:445px;
+      bottom:112px;
+      width:210px;
+      height:230px;
+    }
+    .reader-body{position:absolute;left:56px;bottom:0;width:96px;height:128px;border-radius:20px;background:linear-gradient(180deg,#2563eb,#1e40af);border:6px solid #0f172a;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:10px;box-shadow:inset 0 -10px 0 rgba(0,0,0,.1)}
+    .antenna{position:absolute;left:95px;bottom:128px;width:20px;height:85px;background:#0f172a;border-radius:999px}
+    .antenna:before{content:"";position:absolute;left:50%;top:-15px;transform:translateX(-50%);width:72px;height:26px;border-radius:50%;background:#06b6d4;border:5px solid #0f172a}
+    .center{right:72px;bottom:118px;width:280px;height:210px}
+    .screen{position:absolute;right:0;top:0;width:250px;height:172px;border-radius:18px;background:#0f172a;border:8px solid #334155;color:#dbeafe;padding:14px 14px 18px;box-shadow:0 20px 28px rgba(15,23,42,.22)}
+    .screen .screen-title{color:#93c5fd;font-weight:800;margin-bottom:8px;font-size:15px}
+    .screen .row{display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.13);font-size:13px;padding:5px 0}
+    .screen .success{margin-top:8px;border-radius:10px;background:#16a34a;color:#fff;text-align:center;padding:5px 8px;font-weight:800;font-size:13px;line-height:1.25;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .stand{position:absolute;right:108px;top:170px;width:34px;height:40px;background:#334155}
+    .base{position:absolute;right:62px;top:208px;width:126px;height:18px;border-radius:999px;background:#334155}
+    .component-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+    .component{padding:14px 15px;border:1px solid #bfdbfe;background:#f8fbff;border-radius:16px;display:flex;gap:10px;align-items:flex-start}
+    .component b{color:#1d4ed8}
+    .component .icon{font-size:24px;line-height:1}
+
+    .grid-2{display:grid;grid-template-columns:minmax(250px,.62fr) minmax(0,1.85fr);gap:20px;align-items:start}
+    .question-card{border:1px solid #dbeafe;border-radius:16px;padding:12px;margin-bottom:10px;background:#fff;transition:.25s ease}
+    .question-card.locked{opacity:.46;filter:grayscale(.35);background:#f8fafc}
+    .question-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:8px}
+    .q-title{font-weight:800;color:#0f172a;font-size:14px;line-height:1.45}
+    .status{font-size:11px;padding:3px 7px;border-radius:999px;background:#e2e8f0;color:#475569;white-space:nowrap}
+    .status.open{background:#dbeafe;color:#1d4ed8}
+    .status.done{background:#dcfce7;color:#15803d}
+    .options{display:grid;gap:7px}
+    .option-btn{border:1px solid #bfdbfe;background:#f8fbff;border-radius:12px;padding:8px 10px;text-align:left;color:#1f2937;font-size:13px;cursor:pointer;transition:.2s ease}
+    .option-btn:hover:not(:disabled){border-color:#60a5fa;transform:translateX(4px);background:#eff6ff}
+    .option-btn:disabled{cursor:not-allowed}
+    .option-btn.correct{background:#dcfce7;border-color:#22c55e;color:#166534;font-weight:800}
+    .option-btn.wrong{background:#fee2e2;border-color:#ef4444;color:#991b1b}
+    .feedback{margin-top:7px;font-size:12px;color:#475569;min-height:20px;line-height:1.45}
+
+    /* enhanced animation stage */
+    .animation-stage{
+      position:sticky;
+      top:12px;
+      border-radius:24px;
+      border:1px solid #bfdbfe;
+      background:
+        radial-gradient(circle at 50% 8%, rgba(96,165,250,.18), transparent 28%),
+        linear-gradient(180deg,#eff6ff 0%,#ffffff 60%,#d1fae5 100%);
+      overflow:hidden;
+      padding:16px;
+    }
+    .mini-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:12px;
+    }
+    .mini-title b{font-size:18px;color:#0f172a}
+    .progress-pill{
+      background:#e0f2fe;
+      color:#0369a1;
+      border-radius:999px;
+      padding:5px 10px;
+      font-size:13px;
+      font-weight:800;
+    }
+    .animation-card{
+      border:1px solid #cfe1ff;
+      border-radius:22px;
+      background:linear-gradient(180deg,#fbfdff 0%,#f7fbff 100%);
+      overflow:hidden;
+    }
+    .stage-top-label{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      padding:12px 16px;
+      background:#f8fbff;
+      border-bottom:1px solid #dbeafe;
+      color:#334155;
+      font-size:14px;
+      font-weight:700;
+    }
+    .stage-area{
+      position:relative;
+      height:600px;
+      overflow:hidden;
+      background:
+        linear-gradient(180deg,#dbeafe 0%,#eff6ff 40%,#e8fff4 41%,#cbf5df 100%);
+    }
+    .mountain{
+      position:absolute;
+      bottom:150px;
+      width:260px;height:120px;
+      background:linear-gradient(180deg,#c7d2fe,#a5b4fc);
+      opacity:.45;
+      clip-path:polygon(0 100%,20% 45%,40% 72%,58% 25%,80% 60%,100% 100%);
+    }
+    .mountain.m1{left:-10px}
+    .mountain.m2{right:60px;bottom:165px;transform:scale(1.15)}
+    .cloud{
+      position:absolute;
+      width:90px;height:34px;
+      background:rgba(255,255,255,.88);
+      border-radius:999px;
+      box-shadow:30px 4px 0 6px rgba(255,255,255,.88), 12px -12px 0 8px rgba(255,255,255,.88);
+      opacity:.8;
+      animation:cloudFloat 18s linear infinite;
+    }
+    .cloud.c1{top:42px;left:30px}
+    .cloud.c2{top:86px;left:280px;animation-duration:24s}
+    @keyframes cloudFloat{
+      0%{transform:translateX(0)}
+      50%{transform:translateX(18px)}
+      100%{transform:translateX(0)}
+    }
+
+    .track{
+      position:absolute;
+      left:0;right:0;bottom:0;height:210px;
+      background:linear-gradient(180deg,#64748b,#334155);
+      clip-path:polygon(0 26%,100% 0,100% 100%,0 100%);
+    }
+    .track:before{
+      content:"";
+      position:absolute;
+      left:6%;right:8%;top:92px;height:6px;
+      background:repeating-linear-gradient(90deg,#fff 0 42px,transparent 42px 72px);
+      opacity:.7;
+      transform:rotate(-3deg);
+    }
+
+    .hero-rider{
+      position:absolute;
+      left:48px;
+      bottom:104px;
+      width:232px;
+      height:186px;
+      z-index:8;
+      transition:none;
+    }
+    .hero-rider .wheel{
+      width:54px;height:54px;border-width:6px;bottom:4px;
+      animation:wheelSpin 1s linear infinite paused;
+    }
+    .hero-rider .wheel.left{left:12px}
+    .hero-rider .wheel.right{right:14px}
+    .hero-rider .bike-frame{left:44px;bottom:34px;width:96px;height:44px;border-width:6px}
+    .hero-rider .person-head{left:88px;top:8px;width:34px;height:34px;border-width:4px}
+    .hero-rider .helmet{left:84px;top:2px;width:42px;height:18px}
+    .hero-rider .body{left:74px;top:44px;width:54px;height:44px;border-width:4px}
+    .hero-rider .arm{left:112px;top:56px;width:60px;height:9px}
+    .hero-rider .wrist-tag{left:156px;top:70px;width:24px;height:14px}
+    .hero-rider.moving .wheel{animation-play-state:running}
+    @keyframes wheelSpin{
+      from{transform:rotate(0deg)}
+      to{transform:rotate(360deg)}
+    }
+    .hero-rider.move-to-gate{
+      animation:riderForward 1.25s ease-out forwards;
+    }
+    @keyframes riderForward{
+      from{left:48px}
+      to{left:182px}
+    }
+    .hero-rider.parked{
+      left:182px;
+    }
+
+
+    /* 大画布增强：让动画成为主视觉 */
+    .hero-rider .wheel{width:62px;height:62px}
+    .hero-rider .wheel.left{left:14px}
+    .hero-rider .wheel.right{right:16px}
+    .hero-rider .bike-frame{left:50px;bottom:39px;width:110px;height:50px}
+    .hero-rider .person-head{left:100px;top:8px;width:39px;height:39px}
+    .hero-rider .helmet{left:96px;top:1px;width:48px;height:21px}
+    .hero-rider .body{left:84px;top:50px;width:62px;height:50px}
+    .hero-rider .arm{left:128px;top:64px;width:68px}
+    .hero-rider .wrist-tag{left:178px;top:80px;width:28px;height:16px}
+
+    .rfid-gate{
+      position:absolute;
+      left:340px;
+      bottom:118px;
+      width:185px;
+      height:235px;
+      z-index:7;
+    }
+    .rfid-gate .arch{
+      position:absolute;
+      inset:0;
+      border:10px solid #2563eb;
+      border-bottom-width:16px;
+      border-radius:22px 22px 14px 14px;
+      background:linear-gradient(180deg,rgba(219,234,254,.9),rgba(239,246,255,.45));
+      box-shadow:0 16px 28px rgba(37,99,235,.16);
+    }
+    .rfid-gate .header{
+      position:absolute;
+      left:20px;right:20px;top:16px;height:28px;
+      border-radius:999px;
+      background:linear-gradient(90deg,#1d4ed8,#06b6d4);
+      color:#fff;
+      display:flex;align-items:center;justify-content:center;
+      font-size:13px;font-weight:800;
+      letter-spacing:.05em;
+    }
+    .rfid-gate .zone{
+      position:absolute;
+      left:-14px;right:-14px;top:28px;bottom:6px;
+      background:linear-gradient(180deg,rgba(6,182,212,.12),rgba(37,99,235,.08));
+      border-radius:22px;
+      opacity:0;
+      transition:opacity .35s ease;
+    }
+    .rfid-gate .zone.on{
+      opacity:1;
+      box-shadow:0 0 0 12px rgba(6,182,212,.08), inset 0 0 25px rgba(6,182,212,.2);
+    }
+    .rfid-gate .base{
+      position:absolute;left:-16px;right:-16px;bottom:-14px;height:18px;
+      border-radius:999px;background:#334155;
+    }
+
+    .scan-rings{
+      position:absolute;
+      left:402px;
+      top:250px;
+      width:60px;height:60px;
+      z-index:5;
+      pointer-events:none;
+    }
+    .scan-rings .ring{
+      position:absolute;
+      inset:0;
+      border:3px solid rgba(37,99,235,.65);
+      border-radius:50%;
+      opacity:0;
+      transform:scale(.3);
+    }
+    .scan-rings.on .ring{animation:scanPulse 1.8s ease-out infinite}
+    .scan-rings.on .ring.r2{animation-delay:.35s}
+    .scan-rings.on .ring.r3{animation-delay:.7s}
+    @keyframes scanPulse{
+      0%{transform:scale(.2);opacity:1}
+      100%{transform:scale(3.4);opacity:0}
+    }
+
+    .backend-panel{
+      position:absolute;
+      right:26px;
+      top:22px;
+      width:260px;
+      min-height:216px;
+      z-index:8;
+      border-radius:22px;
+      background:#0f172a;
+      border:8px solid #475569;
+      box-shadow:0 18px 32px rgba(15,23,42,.22);
+      color:#dbeafe;
+      padding:14px 14px 18px;
+      transition:transform .35s ease, box-shadow .35s ease;
+    }
+    .backend-panel.success{
+      box-shadow:0 0 0 10px rgba(34,197,94,.12), 0 18px 32px rgba(21,128,61,.18);
+      transform:translateY(-3px);
+    }
+    .backend-panel{z-index:9}
+    .rfid-gate{z-index:6}
+    .hero-rider{z-index:8}
+
+    .backend-title{
+      color:#93c5fd;
+      font-weight:800;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:6px;
+      font-size:14px;
+    }
+    .signal-lamp{
+      width:12px;height:12px;border-radius:50%;
+      background:#64748b;
+      box-shadow:0 0 0 5px rgba(100,116,139,.15);
+      transition:.3s ease;
+    }
+    .signal-lamp.active{
+      background:#22c55e;
+      box-shadow:0 0 0 7px rgba(34,197,94,.18);
+    }
+    .backend-list{
+      display:grid;
+      gap:6px;
+      margin-top:6px;
+    }
+    .backend-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:6px 9px;
+      background:rgba(255,255,255,.06);
+      border-radius:10px;
+      font-size:12px;
+    }
+    .big-status{
+      margin-top:10px;
+      border-radius:12px;
+      background:#1e293b;
+      border:1px solid rgba(255,255,255,.08);
+      color:#e2e8f0;
+      text-align:center;
+      padding:8px 8px;
+      font-weight:800;
+      font-size:13px;
+      line-height:1.35;
+      transition:.35s ease;
+      white-space:normal;
+      overflow:hidden;
+    }
+    .big-status.ok{
+      background:#14532d;
+      color:#dcfce7;
+      border-color:rgba(34,197,94,.25);
+    }
+    .backend-panel .big-status.ok{
+      position:relative;
+      z-index:2;
+      margin-bottom:0;
+    }
+
+    .data-flow{
+      position:absolute;
+      height:6px;
+      border-radius:999px;
+      opacity:0;
+      z-index:6;
+      overflow:visible;
+      transition:opacity .2s ease;
+    }
+    .data-flow .beam{
+      position:absolute;inset:0;
+      border-radius:999px;
+      background:linear-gradient(90deg,#f59e0b,#22c55e,#06b6d4);
+      box-shadow:0 0 12px rgba(6,182,212,.25);
+    }
+    .data-flow .dot{
+      position:absolute;
+      top:50%;
+      width:12px;height:12px;
+      margin-top:-6px;
+      border-radius:50%;
+      background:#fff;
+      box-shadow:0 0 0 3px rgba(255,255,255,.22),0 0 10px rgba(255,255,255,.5);
+      animation:dataTravel 1.2s linear infinite;
+    }
+    @keyframes dataTravel{
+      from{left:-6px;opacity:0}
+      15%{opacity:1}
+      85%{opacity:1}
+      to{left:calc(100% - 6px);opacity:0}
+    }
+    .flow-tag-reader{left:245px;top:360px;width:115px;transform:rotate(-18deg)}
+    .flow-reader-backend{left:520px;top:286px;width:150px;transform:rotate(-22deg)}
+    .data-flow.show{opacity:1}
+    .data-packet{
+      position:absolute;
+      width:54px;
+      height:38px;
+      border-radius:12px;
+      background:linear-gradient(180deg,#ffffff,#e0f2fe);
+      border:2px solid #60a5fa;
+      box-shadow:0 10px 18px rgba(96,165,250,.18);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#1d4ed8;
+      font-weight:800;
+      font-size:12px;
+      opacity:0;
+      z-index:9;
+      transition:left 1s ease, top 1s ease, opacity .3s ease;
+    }
+    .data-packet.show{opacity:1}
+
+    .tag-halo{
+      position:absolute;
+      left:208px;
+      top:320px;
+      width:44px;height:44px;
+      border-radius:50%;
+      border:3px solid rgba(245,158,11,.7);
+      opacity:0;
+      z-index:6;
+    }
+    .tag-halo.on{animation:tagGlow 1.2s ease-out infinite}
+    @keyframes tagGlow{
+      from{transform:scale(.5);opacity:1}
+      to{transform:scale(2.2);opacity:0}
+    }
+
+    .stage-caption{
+      margin:14px 14px 10px;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      border-radius:16px;
+      padding:13px 14px;
+      min-height:68px;
+      color:#475569;
+      font-size:15px;
+    }
+    .timeline{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:8px;
+      padding:0 14px 16px;
+    }
+    .step-chip{
+      border:1px solid #dbeafe;
+      border-radius:14px;
+      background:#fff;
+      padding:8px 6px;
+      text-align:center;
+      font-size:12px;
+      color:#64748b;
+      font-weight:700;
+      min-height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition:.25s ease;
+    }
+    .step-chip.active{
+      background:#eff6ff;
+      border-color:#60a5fa;
+      color:#1d4ed8;
+      box-shadow:0 8px 18px rgba(37,99,235,.12);
+      transform:translateY(-2px);
+    }
+    .step-chip.done{
+      background:#ecfdf5;
+      border-color:#4ade80;
+      color:#15803d;
+    }
+    .control-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:14px;
+    }
+    button{font-family:inherit}
+    .primary-btn,.ghost-btn{
+      border:0;border-radius:14px;padding:11px 16px;font-weight:800;cursor:pointer;transition:.2s ease
+    }
+    .primary-btn{
+      background:linear-gradient(135deg,var(--primary),var(--cyan));
+      color:#fff;
+      box-shadow:0 10px 18px rgba(37,99,235,.22);
+    }
+    .primary-btn:hover:not(:disabled){transform:translateY(-2px)}
+    .primary-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+    .ghost-btn{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+
+    .locked-panel.disabled{opacity:.48;filter:grayscale(.2);pointer-events:none}
+    .sort-list{display:grid;gap:12px;margin:16px 0}
+    .sort-item{display:flex;align-items:center;gap:12px;padding:14px 15px;border:1px solid #bfdbfe;background:#fff;border-radius:16px;cursor:grab;transition:.2s ease;user-select:none}
+    .sort-item:active{cursor:grabbing}
+    .sort-item.dragging{opacity:.5;transform:scale(.98)}
+    .handle{width:30px;height:30px;border-radius:10px;background:#eff6ff;color:#1d4ed8;display:inline-flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0}
+    .sort-item.wrong-order{border-color:#ef4444;background:#fff1f2}
+    .sort-item.right-order{border-color:#22c55e;background:#f0fdf4}
+    .sort-feedback{min-height:34px;color:#475569;font-weight:700}
+
+    .summary-box{background:linear-gradient(180deg,#f8fbff,#ffffff);border:1px solid #bfdbfe;border-radius:20px;padding:20px}
+    .summary-box.locked-summary{filter:blur(1px) grayscale(.4);opacity:.42;user-select:none}
+    .summary-box h3{margin:0 0 10px;color:#1d4ed8;font-size:20px}
+    .summary-box ol{margin:8px 0 0 22px;padding:0}
+    .summary-box li{margin:6px 0}
+    .copy-row{display:flex;justify-content:flex-end;margin-top:14px}
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:28px;
+      transform:translateX(-50%) translateY(20px);
+      background:#0f172a;
+      color:#fff;
+      padding:12px 18px;
+      border-radius:999px;
+      box-shadow:0 16px 28px rgba(15,23,42,.28);
+      opacity:0;
+      pointer-events:none;
+      transition:.25s ease;
+      z-index:100;
+      font-weight:800;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    @media (max-width:960px){
+      .grid-2{grid-template-columns:1fr}
+      .animation-stage{position:relative;top:0}
+      .component-strip{grid-template-columns:1fr}
+      .scene{min-height:560px}
+      .cyclist{left:40px;bottom:74px;transform:scale(.88);transform-origin:left bottom}
+      .reader{left:55%;bottom:112px;transform:translateX(-50%) scale(.9);transform-origin:center bottom}
+      .center{right:28px;top:46px;bottom:auto;transform:scale(.9);transform-origin:right top}
+      .timeline{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width:640px){
+      section{padding:18px;border-radius:18px}
+      .scene{min-height:590px}
+      .cyclist{left:10px;bottom:70px;transform:scale(.75);transform-origin:left bottom}
+      .reader{left:58%;bottom:105px;transform:translateX(-50%) scale(.75)}
+      .center{right:10px;top:40px;transform:scale(.76);transform-origin:right top}
+      .stage-area{height:450px}
+      .backend-panel{right:8px;top:8px;transform:scale(.72);transform-origin:right top}
+      .rfid-gate{left:134px;bottom:118px;transform:scale(.82);transform-origin:left bottom}
+      .hero-rider{transform:scale(.8);transform-origin:left bottom;left:8px}
+      .flow-tag-reader{left:150px;top:274px;width:88px}
+      .flow-reader-backend{left:250px;top:180px;width:118px}
+      .scan-rings{left:196px;top:188px}
+      .tag-halo{left:148px;top:249px}
+      .timeline{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="badge">🚴 十五运会公路自行车赛场景 · RFID 自主探究</div>
+    <h1>RFID 无感通关工作流程</h1>
+    <p class="subtitle">通过“观察场景—分步问答—联动动画—拖拽排序—生成总结”的方式，探究数据如何在无物理连线的情况下，从选手手环传递到赛事后台管理系统。</p>
+  </header>
+
+  <main>
+    <section>
+      <h2 class="section-title"><span class="num">1</span>场景示意图区：先认识 RFID 系统组成</h2>
+      <div class="hint">将鼠标悬停在设备上，查看它在 RFID 系统中的身份与作用。</div>
+
+      <div class="scene">
+        <div class="road"></div>
+
+        <div class="device cyclist" tabindex="0">
+          <div class="label">手环：电子标签，存储选手身份、编号等数据。</div>
+          <div class="helmet"></div>
+          <div class="person-head"></div>
+          <div class="body"></div>
+          <div class="arm"></div>
+          <div class="wrist-tag"></div>
+          <div class="bike-frame"></div>
+          <div class="wheel left"></div>
+          <div class="wheel right"></div>
+        </div>
+
+        <div class="device reader" tabindex="0">
+          <div class="label">赛道设备：读写器，含天线，负责发射 / 接收电磁波。</div>
+          <div class="antenna"></div>
+          <div class="reader-body">赛道<br>读写器</div>
+        </div>
+
+        <div class="device center" tabindex="0">
+          <div class="label">远端大屏：后台管理系统，完成数据核验、记录与管理。</div>
+          <div class="screen">
+            <div class="screen-title">赛事指挥中心</div>
+            <div class="row"><span>选手编号</span><span>#A015</span></div>
+            <div class="row"><span>赛段状态</span><span>识别中</span></div>
+            <div class="success">核验成功</div>
+          </div>
+          <div class="stand"></div>
+          <div class="base"></div>
+        </div>
+      </div>
+
+      <div class="component-strip">
+        <div class="component"><span class="icon">🏷️</span><div><b>电子标签</b><br>存储数据，本场景为选手手环内置模块。</div></div>
+        <div class="component"><span class="icon">📡</span><div><b>读写器</b><br>含天线，负责发射 / 接收无线信号。</div></div>
+        <div class="component"><span class="icon">🖥️</span><div><b>后台管理系统</b><br>进行数据存储、身份核验与通关记录。</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title"><span class="num">2</span>分步探究问答区 + 动态动画演示区</h2>
+      
+
+      <div class="grid-2">
+        <div id="questions"></div>
+
+        <div class="animation-stage">
+          <div class="mini-title">
+            <b>动态动画演示区（增强版）</b>
+            <span class="progress-pill" id="progressText">进度：0 / 4</span>
+          </div>
+
+          <div class="animation-card">
+            <div class="stage-top-label">
+              <span>👀 观察重点：谁先发射？谁被激活？数据往哪里走？</span>
+              <span id="stageStateTop">当前状态：等待开始</span>
+            </div>
+
+            <div class="stage-area" id="stageArea">
+              <div class="mountain m1"></div>
+              <div class="mountain m2"></div>
+              <div class="cloud c1"></div>
+              <div class="cloud c2"></div>
+              <div class="track"></div>
+
+              <div class="hero-rider" id="heroRider">
+                <div class="helmet"></div>
+                <div class="person-head"></div>
+                <div class="body"></div>
+                <div class="arm"></div>
+                <div class="wrist-tag"></div>
+                <div class="bike-frame"></div>
+                <div class="wheel left"></div>
+                <div class="wheel right"></div>
+              </div>
+
+              <div class="rfid-gate" id="rfidGate">
+                <div class="arch"></div>
+                <div class="header">RFID 感应门</div>
+                <div class="zone" id="gateZone"></div>
+                <div class="base"></div>
+              </div>
+
+              <div class="scan-rings" id="scanRings">
+                <div class="ring r1"></div>
+                <div class="ring r2"></div>
+                <div class="ring r3"></div>
+              </div>
+
+              <div class="tag-halo" id="tagHalo"></div>
+
+              <div class="data-flow flow-tag-reader" id="flowTagReader">
+                <div class="beam"></div>
+                <div class="dot"></div>
+              </div>
+              <div class="data-flow flow-reader-backend" id="flowReaderBackend">
+                <div class="beam"></div>
+                <div class="dot"></div>
+              </div>
+
+              <div class="data-packet" id="packetOne">ID 数据</div>
+              <div class="data-packet" id="packetTwo">上传中</div>
+
+              <div class="backend-panel" id="backendPanel">
+                <div class="backend-title">
+                  <span>赛事后台管理系统</span>
+                  <span class="signal-lamp" id="signalLamp"></span>
+                </div>
+                <div class="backend-list">
+                  <div class="backend-row"><span>选手编号</span><span id="backendId">--</span></div>
+                  <div class="backend-row"><span>当前位置</span><span id="backendPos">待识别</span></div>
+                  <div class="backend-row"><span>数据状态</span><span id="backendData">未接收</span></div>
+                </div>
+                <div class="big-status" id="bigStatus">等待感应数据...</div>
+              </div>
+            </div>
+
+            <div class="stage-caption" id="stageCaption">
+              请先回答问题 1。动画会带你一步一步观察 RFID 无感通关的真实工作流程。
+            </div>
+
+            <div class="timeline" id="timeline">
+              <div class="step-chip" data-step="1">1. 读写器发射电磁波</div>
+              <div class="step-chip" data-step="2">2. 标签进入感应区并被激活</div>
+              <div class="step-chip" data-step="3">3. 标签向读写器回传数据</div>
+              <div class="step-chip" data-step="4">4. 读写器上传数据到后台</div>
+              <div class="step-chip" data-step="5">5. 后台核验成功并记录</div>
+            </div>
+          </div>
+
+          <div class="control-row">
+            <button class="primary-btn" id="playFullBtn" disabled>播放完整流程</button>
+            <button class="ghost-btn" id="pauseBtn" disabled>暂停动画</button>
+            <button class="ghost-btn" id="replayCurrentBtn">重播当前步骤</button>
+            <button class="ghost-btn" id="resetBtn">重置探究</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sortSection" class="locked-panel disabled">
+      <h2 class="section-title"><span class="num">4</span>流程拖拽排序区：巩固 RFID 工作逻辑</h2>
+      <div class="hint">问答全部完成后，本区域解锁。请拖动步骤，按真实工作流程排序。</div>
+
+      <div class="sort-list" id="sortList"></div>
+
+      <div class="control-row">
+        <button class="primary-btn" id="checkSortBtn">校验顺序</button>
+        <button class="ghost-btn" id="shuffleBtn">重新打乱</button>
+      </div>
+      <div class="sort-feedback" id="sortFeedback"></div>
+    </section>
+
+    <section id="summarySection">
+      <h2 class="section-title"><span class="num">5</span>知识总结输出区</h2>
+      <div class="hint">拖拽排序正确后，系统会自动解锁完整总结，可直接摘抄到学习任务单。</div>
+
+      <div class="summary-box locked-summary" id="summaryBox">
+        <h3>RFID 系统三大组成</h3>
+        <p>一套完整的 RFID 系统包含：<strong>电子标签、读写器、后台管理系统</strong>。</p>
+
+        <h3>RFID 标准工作流程</h3>
+        <ol>
+          <li>赛道上的读写器通过天线持续发射电磁波；</li>
+          <li>选手佩戴的电子标签进入感应范围后被激活；</li>
+          <li>电子标签将内部存储的身份、定位数据回传给读写器；</li>
+          <li>读写器接收数据并转发至后台管理系统；</li>
+          <li>后台系统完成身份核验、通关记录，实现无感通行。</li>
+        </ol>
+
+        <div class="copy-row">
+          <button class="primary-btn" id="copyBtn" disabled>复制总结</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const questions = [
+      {
+        title:"问题 1：整套设备中，哪一部分最先向外发射电磁波？",
+        options:["A. 电子标签（手环）","B. 读写器（赛道设备）"],
+        answer:1,
+        wrong:"再想一想：谁是信号发射端？",
+        right:"回答正确！读写器天线会先向外发射电磁波。",
+        stageText:"现在你能看到：感应门开始向外发出一圈一圈的电磁波，这表示读写器正在主动工作。"
+      },
+      {
+        title:"问题 2：电磁波覆盖到手环后，会对手环内的电子标签产生什么作用？",
+        options:["A. 被激活","B. 自动关机","C. 发出声音"],
+        answer:0,
+        wrong:"再想一想：电磁波到达标签后，是让标签进入工作状态，还是让它停止？",
+        right:"回答正确！电子标签进入感应范围后会被激活。",
+        stageText:"现在骑手进入感应区域，手环位置出现高亮光圈，说明电子标签已经被激活。"
+      },
+      {
+        title:"问题 3：被激活的电子标签，接下来会执行什么操作？",
+        options:["A. 向读写器回传自身存储的数据","B. 停止工作","C. 随机发送信号"],
+        answer:0,
+        wrong:"再想一想：标签被激活后，应当把什么信息传回给读写器？",
+        right:"回答正确！标签会把自身存储的数据回传给读写器。",
+        stageText:"你现在看到一条从手环流向感应门的数据光束，表示标签正在回传身份数据。"
+      },
+      {
+        title:"问题 4：读写器收到数据后，会将数据传输到哪里完成核验与记录？",
+        options:["A. 后台管理系统（赛事指挥中心）","B. 无后续传输"],
+        answer:0,
+        wrong:"再想一想：比赛需要记录和核验数据，读写器收到信息后还要传给谁？",
+        right:"回答正确！数据会上传到后台管理系统进行核验与记录。",
+        stageText:"感应门将接收到的数据继续上传到后台管理系统，后台界面随即显示“核验成功”。"
+      }
+    ];
+
+    const correctOrder = [
+      "读写器发射电磁波",
+      "电子标签被电磁波激活",
+      "电子标签向读写器回传数据",
+      "读写器将数据上传至后台管理系统",
+      "后台管理系统完成数据核验"
+    ];
+
+    let currentStep = 0;
+    let fullTimer = null;
+    let draggedItem = null;
+
+    const qBox = document.getElementById("questions");
+    const progressText = document.getElementById("progressText");
+    const stageCaption = document.getElementById("stageCaption");
+    const stageStateTop = document.getElementById("stageStateTop");
+    const playFullBtn = document.getElementById("playFullBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const replayCurrentBtn = document.getElementById("replayCurrentBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const heroRider = document.getElementById("heroRider");
+    const gateZone = document.getElementById("gateZone");
+    const scanRings = document.getElementById("scanRings");
+    const tagHalo = document.getElementById("tagHalo");
+    const flowTagReader = document.getElementById("flowTagReader");
+    const flowReaderBackend = document.getElementById("flowReaderBackend");
+    const packetOne = document.getElementById("packetOne");
+    const packetTwo = document.getElementById("packetTwo");
+    const backendPanel = document.getElementById("backendPanel");
+    const signalLamp = document.getElementById("signalLamp");
+    const backendId = document.getElementById("backendId");
+    const backendPos = document.getElementById("backendPos");
+    const backendData = document.getElementById("backendData");
+    const bigStatus = document.getElementById("bigStatus");
+    const timelineItems = [...document.querySelectorAll(".step-chip")];
+
+    const sortSection = document.getElementById("sortSection");
+    const sortList = document.getElementById("sortList");
+    const checkSortBtn = document.getElementById("checkSortBtn");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+    const sortFeedback = document.getElementById("sortFeedback");
+    const summaryBox = document.getElementById("summaryBox");
+    const copyBtn = document.getElementById("copyBtn");
+    const toast = document.getElementById("toast");
+
+    function showToast(text){
+      toast.textContent = text;
+      toast.classList.add("show");
+      setTimeout(()=>toast.classList.remove("show"),1800);
+    }
+
+    function renderQuestions(){
+      qBox.innerHTML = "";
+      questions.forEach((q, index)=>{
+        const card = document.createElement("div");
+        card.className = "question-card" + (index > currentStep ? " locked" : "");
+        const statusText = index < currentStep ? "已完成" : index === currentStep ? "待回答" : "未解锁";
+        const statusClass = index < currentStep ? "done" : index === currentStep ? "open" : "";
+
+        card.innerHTML = `
+          <div class="question-top">
+            <div class="q-title">${q.title}</div>
+            <span class="status ${statusClass}">${statusText}</span>
+          </div>
+          <div class="options">
+            ${q.options.map((op,i)=>`<button class="option-btn" data-q="${index}" data-o="${i}" ${index !== currentStep ? "disabled" : ""}>${op}</button>`).join("")}
+          </div>
+          <div class="feedback" id="feedback-${index}">${index > currentStep ? "请先完成上一题。" : index < currentStep ? "已解锁下一步。" : ""}</div>
+        `;
+        qBox.appendChild(card);
+      });
+
+      document.querySelectorAll(".option-btn").forEach(btn=>{
+        btn.addEventListener("click",handleOption);
+      });
+    }
+
+    function handleOption(e){
+      const qIndex = Number(e.target.dataset.q);
+      const oIndex = Number(e.target.dataset.o);
+      if(qIndex !== currentStep) return;
+
+      const q = questions[qIndex];
+      const feedback = document.getElementById(`feedback-${qIndex}`);
+
+      document.querySelectorAll(`.option-btn[data-q="${qIndex}"]`).forEach(b=>{
+        b.classList.remove("wrong","correct");
+      });
+
+      if(oIndex === q.answer){
+        e.target.classList.add("correct");
+        feedback.textContent = q.right;
+        currentStep++;
+        progressText.textContent = `进度：${currentStep} / 4`;
+        playStep(currentStep);
+
+        setTimeout(()=>{
+          renderQuestions();
+          if(currentStep === questions.length){
+            unlockSort();
+            playFullBtn.disabled = false;
+            pauseBtn.disabled = false;
+            showToast("问答完成，拖拽排序已解锁！");
+          }
+        },500);
+      }else{
+        e.target.classList.add("wrong");
+        feedback.textContent = q.wrong;
+      }
+    }
+
+    function clearAnimation(){
+      clearInterval(fullTimer);
+      heroRider.classList.remove("moving","move-to-gate","parked");
+      heroRider.style.left = "48px";
+      gateZone.classList.remove("on");
+      scanRings.classList.remove("on");
+      tagHalo.classList.remove("on");
+      flowTagReader.classList.remove("show");
+      flowReaderBackend.classList.remove("show");
+      packetOne.classList.remove("show");
+      packetTwo.classList.remove("show");
+      packetOne.style.left = "245px";
+      packetOne.style.top = "354px";
+      packetTwo.style.left = "520px";
+      packetTwo.style.top = "282px";
+      backendPanel.classList.remove("success");
+      signalLamp.classList.remove("active");
+      backendId.textContent = "--";
+      backendPos.textContent = "待识别";
+      backendData.textContent = "未接收";
+      bigStatus.textContent = "等待感应数据...";
+      bigStatus.classList.remove("ok");
+      stageStateTop.textContent = "当前状态：等待开始";
+      timelineItems.forEach(i => i.classList.remove("active","done"));
+    }
+
+    function setTimeline(step, completeExtra = false){
+      timelineItems.forEach((item, idx)=>{
+        item.classList.remove("active","done");
+        const n = idx + 1;
+        if(n < step || (completeExtra && n <= step)){
+          item.classList.add("done");
+        }else if(n === step){
+          item.classList.add("active");
+        }
+      });
+    }
+
+    function playStep(step){
+      clearAnimation();
+
+      if(step >= 1){
+        scanRings.classList.add("on");
+        gateZone.classList.add("on");
+        stageCaption.textContent = questions[0].stageText;
+        stageStateTop.textContent = "当前状态：读写器发射电磁波";
+        setTimeline(1);
+      }
+
+      if(step >= 2){
+        setTimeout(()=>{
+          heroRider.classList.add("moving","move-to-gate");
+          tagHalo.classList.add("on");
+          stageCaption.textContent = questions[1].stageText;
+          stageStateTop.textContent = "当前状态：电子标签被激活";
+          setTimeline(2);
+        }, 220);
+      }
+
+      if(step >= 3){
+        setTimeout(()=>{
+          heroRider.classList.remove("move-to-gate");
+          heroRider.classList.add("parked");
+          flowTagReader.classList.add("show");
+          packetOne.classList.add("show");
+          packetOne.style.left = "360px";
+          packetOne.style.top = "338px";
+          stageCaption.textContent = questions[2].stageText;
+          stageStateTop.textContent = "当前状态：标签回传数据";
+          setTimeline(3);
+        }, 1150);
+      }
+
+      if(step >= 4){
+        setTimeout(()=>{
+          heroRider.classList.remove("move-to-gate");
+          heroRider.classList.add("parked");
+          flowReaderBackend.classList.add("show");
+          packetTwo.classList.add("show");
+          packetTwo.style.left = "640px";
+          packetTwo.style.top = "246px";
+          signalLamp.classList.add("active");
+          backendId.textContent = "#A015";
+          backendPos.textContent = "感应门前";
+          backendData.textContent = "已接收";
+          bigStatus.textContent = "后台正在核验...";
+          stageCaption.textContent = questions[3].stageText;
+          stageStateTop.textContent = "当前状态：数据上传后台";
+          setTimeline(4);
+        }, 1350);
+
+        setTimeout(()=>{
+          backendPanel.classList.add("success");
+          bigStatus.textContent = "核验成功";
+          bigStatus.classList.add("ok");
+          setTimeline(5, true);
+          stageStateTop.textContent = "当前状态：后台核验成功";
+        }, 1850);
+      }
+    }
+
+    function playFull(){
+      clearAnimation();
+      let t = 0;
+      const acts = [
+        () => {
+          scanRings.classList.add("on");
+          gateZone.classList.add("on");
+          stageCaption.textContent = "① 读写器（感应门）开始向外持续发射电磁波。";
+          stageStateTop.textContent = "当前状态：读写器发射电磁波";
+          setTimeline(1);
+        },
+        () => {
+          heroRider.classList.add("moving","move-to-gate");
+          tagHalo.classList.add("on");
+          stageCaption.textContent = "② 骑手进入感应区，手环中的电子标签被激活。";
+          stageStateTop.textContent = "当前状态：电子标签被激活";
+          setTimeline(2);
+        },
+        () => {
+          heroRider.classList.remove("move-to-gate");
+          heroRider.classList.add("parked");
+          flowTagReader.classList.add("show");
+          packetOne.classList.add("show");
+          packetOne.style.left = "360px";
+          packetOne.style.top = "338px";
+          stageCaption.textContent = "③ 电子标签把身份、编号等数据回传给读写器。";
+          stageStateTop.textContent = "当前状态：标签回传数据";
+          setTimeline(3);
+        },
+        () => {
+          flowReaderBackend.classList.add("show");
+          packetTwo.classList.add("show");
+          packetTwo.style.left = "640px";
+          packetTwo.style.top = "246px";
+          signalLamp.classList.add("active");
+          backendId.textContent = "#A015";
+          backendPos.textContent = "感应门前";
+          backendData.textContent = "已接收";
+          bigStatus.textContent = "后台正在核验...";
+          stageCaption.textContent = "④ 读写器把接收到的数据上传到后台管理系统。";
+          stageStateTop.textContent = "当前状态：数据上传后台";
+          setTimeline(4);
+        },
+        () => {
+          backendPanel.classList.add("success");
+          bigStatus.textContent = "核验成功";
+          bigStatus.classList.add("ok");
+          stageCaption.textContent = "⑤ 后台完成身份核验、通关记录，并显示“核验成功”。";
+          stageStateTop.textContent = "当前状态：后台核验成功";
+          setTimeline(5, true);
+        }
+      ];
+      acts[0]();
+      fullTimer = setInterval(()=>{
+        t++;
+        if(t >= acts.length){
+          clearInterval(fullTimer);
+          return;
+        }
+        acts[t]();
+      }, 1250);
+    }
+
+    function pauseFull(){
+      clearInterval(fullTimer);
+      heroRider.classList.remove("moving","move-to-gate","parked");
+      scanRings.classList.remove("on");
+      tagHalo.classList.remove("on");
+      stageCaption.textContent = "动画已暂停。你可以点击“播放完整流程”重新观看，或点击“重播当前步骤”。";
+      stageStateTop.textContent = "当前状态：已暂停";
+    }
+
+    function replayCurrentStep(){
+      clearInterval(fullTimer);
+      if(currentStep === 0){
+        clearAnimation();
+        stageCaption.textContent = "请先回答问题 1。";
+        return;
+      }
+      playStep(currentStep);
+    }
+
+    function shuffle(arr){
+      const copy = [...arr];
+      for(let i=copy.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [copy[i],copy[j]] = [copy[j],copy[i]];
+      }
+      return copy;
+    }
+
+    function renderSort(){
+      sortList.innerHTML = "";
+      const items = shuffle(correctOrder);
+      items.forEach((text,index)=>addSortItem(text,index));
+    }
+
+    function addSortItem(text,index){
+      const item = document.createElement("div");
+      item.className = "sort-item";
+      item.draggable = true;
+      item.dataset.value = text;
+      item.innerHTML = `<span class="handle">${index+1}</span><span>${text}</span>`;
+
+      item.addEventListener("dragstart",()=>{
+        draggedItem = item;
+        item.classList.add("dragging");
+      });
+      item.addEventListener("dragend",()=>{
+        draggedItem = null;
+        item.classList.remove("dragging");
+        refreshHandles();
+      });
+      item.addEventListener("dragover",(e)=>{
+        e.preventDefault();
+        const afterElement = getDragAfterElement(sortList,e.clientY);
+        if(afterElement == null){
+          sortList.appendChild(draggedItem);
+        }else{
+          sortList.insertBefore(draggedItem,afterElement);
+        }
+      });
+
+      sortList.appendChild(item);
+    }
+
+    function getDragAfterElement(container,y){
+      const draggableElements = [...container.querySelectorAll(".sort-item:not(.dragging)")];
+      return draggableElements.reduce((closest,child)=>{
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if(offset < 0 && offset > closest.offset){
+          return {offset:offset,element:child};
+        }else{
+          return closest;
+        }
+      },{offset:Number.NEGATIVE_INFINITY}).element;
+    }
+
+    function refreshHandles(){
+      [...sortList.children].forEach((item,index)=>{
+        item.querySelector(".handle").textContent = index + 1;
+      });
+    }
+
+    function unlockSort(){
+      sortSection.classList.remove("disabled");
+      renderSort();
+    }
+
+    function checkSort(){
+      const current = [...sortList.children].map(item=>item.dataset.value);
+      let allRight = true;
+      [...sortList.children].forEach((item,index)=>{
+        item.classList.remove("wrong-order","right-order");
+        if(item.dataset.value === correctOrder[index]){
+          item.classList.add("right-order");
+        }else{
+          item.classList.add("wrong-order");
+          allRight = false;
+        }
+      });
+
+      if(allRight){
+        sortFeedback.textContent = "排序正确！你已经掌握 RFID 无感通关的标准流程。知识总结已解锁。";
+        summaryBox.classList.remove("locked-summary");
+        copyBtn.disabled = false;
+        showToast("太棒了，知识总结已解锁！");
+        document.getElementById("summarySection").scrollIntoView({behavior:"smooth",block:"start"});
+      }else{
+        sortFeedback.textContent = "还有步骤位置不正确，红色条目需要重新调整。";
+      }
+    }
+
+    function resetAll(){
+      currentStep = 0;
+      clearAnimation();
+      progressText.textContent = "进度：0 / 4";
+      stageCaption.textContent = "请先回答问题 1。动画会带你一步一步观察 RFID 无感通关的真实工作流程。";
+      playFullBtn.disabled = true;
+      pauseBtn.disabled = true;
+      sortSection.classList.add("disabled");
+      sortList.innerHTML = "";
+      sortFeedback.textContent = "";
+      summaryBox.classList.add("locked-summary");
+      copyBtn.disabled = true;
+      renderQuestions();
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+
+    function copySummary(){
+      const text = `RFID 系统三大组成
+一套完整的 RFID 系统包含：电子标签、读写器、后台管理系统。
+
+RFID 标准工作流程
+① 赛道上的读写器通过天线持续发射电磁波；
+② 选手佩戴的电子标签进入感应范围后被激活；
+③ 电子标签将内部存储的身份、定位数据回传给读写器；
+④ 读写器接收数据并转发至后台管理系统；
+⑤ 后台系统完成身份核验、通关记录，实现无感通行。`;
+      navigator.clipboard.writeText(text).then(()=>{
+        showToast("总结已复制！");
+      }).catch(()=>{
+        showToast("复制失败，请手动选择文本。");
+      });
+    }
+
+    playFullBtn.addEventListener("click",playFull);
+    pauseBtn.addEventListener("click",pauseFull);
+    replayCurrentBtn.addEventListener("click",replayCurrentStep);
+    resetBtn.addEventListener("click",resetAll);
+    checkSortBtn.addEventListener("click",checkSort);
+    shuffleBtn.addEventListener("click",()=>{
+      renderSort();
+      sortFeedback.textContent = "已重新打乱，请再次排序。";
+    });
+    copyBtn.addEventListener("click",copySummary);
+
+    renderQuestions();
+  </script>
+</body>
+</html>
